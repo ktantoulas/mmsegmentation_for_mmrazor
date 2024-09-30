@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 from .typing_utils import SampleList
 
-
+@torch.fx.wrap
 def add_prefix(inputs, prefix):
     """Add prefix for dict.
 

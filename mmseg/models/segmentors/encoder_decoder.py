@@ -27,6 +27,18 @@ def seg_logit(self, batch_img_metas, inputs):
         return seg_logit
 
 @torch.fx.wrap
+def update_losses(losses_dict, new_losses):
+    """Custom function to update losses by merging two dictionaries."""
+    for key, value in new_losses.items():
+        if key in losses_dict:
+            # If the key already exists, sum the losses (or apply any logic you want)
+            losses_dict[key] += value
+        else:
+            # If the key does not exist, add the new key-value pair
+            losses_dict[key] = value
+    return losses_dict
+
+@torch.fx.wrap
 def _get_predictions(self, data_samples, inputs):
     if data_samples is not None:
         batch_img_metas = [
@@ -53,13 +65,11 @@ def _get_loss(self, x: Tensor, data_samples: SampleList) -> dict:
     Returns:
         dict[str, Tensor]: a dictionary of loss components
     """
-    losses = dict()
-    loss_decode = self._decode_head_forward_train(x, data_samples)
-    losses.update(loss_decode)
+    """Handle auxiliary head loss calculation if available."""
+    loss_aux = {}
     if self.with_auxiliary_head:
         loss_aux = self._auxiliary_head_forward_train(x, data_samples)
-        losses.update(loss_aux)
-    return losses
+    return loss_aux
 
 @MODELS.register_module()
 class EncoderDecoder(BaseSegmentor):
@@ -187,7 +197,9 @@ class EncoderDecoder(BaseSegmentor):
         loss_decode = self.decode_head.loss(inputs, data_samples,
                                             self.train_cfg)
 
-        losses.update(add_prefix(loss_decode, 'decode'))
+        # losses.update(add_prefix(loss_decode, 'decode'))
+        losses = update_losses(losses, add_prefix(loss_decode, 'decode'))
+
         return losses
 
     def _auxiliary_head_forward_train(self, inputs: List[Tensor],
@@ -198,11 +210,14 @@ class EncoderDecoder(BaseSegmentor):
         if isinstance(self.auxiliary_head, nn.ModuleList):
             for idx, aux_head in enumerate(self.auxiliary_head):
                 loss_aux = aux_head.loss(inputs, data_samples, self.train_cfg)
-                losses.update(add_prefix(loss_aux, f'aux_{idx}'))
+                # losses.update(add_prefix(loss_aux, f'aux_{idx}'))
+                losses = update_losses(losses, add_prefix(loss_aux, f'aux_{idx}'))
+
         else:
             loss_aux = self.auxiliary_head.loss(inputs, data_samples,
                                                 self.train_cfg)
-            losses.update(add_prefix(loss_aux, 'aux'))
+            # losses.update(add_prefix(loss_aux, 'aux'))
+            losses = update_losses(losses, add_prefix(loss_aux, 'aux'))
 
         return losses
 
@@ -221,15 +236,17 @@ class EncoderDecoder(BaseSegmentor):
 
         x = self.extract_feat(inputs)
 
-        # losses = dict()
+        losses = dict()
 
-        # loss_decode = self._decode_head_forward_train(x, data_samples)
+        loss_decode = self._decode_head_forward_train(x, data_samples)
         # losses.update(loss_decode)
+        losses = update_losses(losses, loss_decode)
 
         # if self.with_auxiliary_head:
         #     loss_aux = self._auxiliary_head_forward_train(x, data_samples)
         #     losses.update(loss_aux)
-        losses = _get_loss(x, data_samples)
+        loss_aux = _get_loss(x, data_samples)
+        losses = update_losses(losses, loss_aux)
 
         return losses
 
