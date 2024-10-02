@@ -8,6 +8,11 @@ import torch.nn.functional as F
 from .typing_utils import SampleList
 
 @torch.fx.wrap
+def add_pref(inputs, prefix):
+    outputs = dict()
+    for name, value in inputs.items():
+        outputs[f'{prefix}.{name}'] = value
+    return outputs
 def add_prefix(inputs, prefix):
     """Add prefix for dict.
 
@@ -20,10 +25,10 @@ def add_prefix(inputs, prefix):
         dict: The dict with keys updated with ``prefix``.
     """
 
-    outputs = dict()
-    for name, value in inputs.items():
-        outputs[f'{prefix}.{name}'] = value
-
+    # outputs = dict()
+    # for name, value in inputs.items():
+    #     outputs[f'{prefix}.{name}'] = value
+    outputs = add_pref(inputs, prefix)
     return outputs
 
 
