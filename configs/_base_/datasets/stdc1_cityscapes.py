@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'CityscapesDataset'
-data_root = r'data/cityscapes/'
+data_root = r'data/cityscapes/' 
 # data_root = r'C:/Users/kosta/Documents/IPC/mmsegmentation/data/cityscapes'
 crop_size = (512, 1024)
 train_pipeline = [
@@ -44,8 +44,8 @@ train_dataloader = dict(
     batch_size=2,
     num_workers=2,
     persistent_workers=True,
-    sampler=dict(type='DefaultSampler', shuffle=True),
-    # sampler=dict(type='InfiniteSampler', shuffle=True),
+    # sampler=dict(type='DefaultSampler', shuffle=True),
+    sampler=dict(type='InfiniteSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
