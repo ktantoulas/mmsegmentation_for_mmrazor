@@ -11,7 +11,8 @@ from torch import Tensor
 from mmseg.registry import MODELS
 from mmseg.utils import (ConfigType, OptConfigType, OptMultiConfig,
                          OptSampleList, SampleList, add_prefix)
-from .base import BaseSegmentor#, postprocess_result
+from .base import BaseSegmentor
+
 @torch.fx.wrap
 def seg_logit(self, batch_img_metas, inputs):
         ori_shape = batch_img_metas[0]['ori_shape']
