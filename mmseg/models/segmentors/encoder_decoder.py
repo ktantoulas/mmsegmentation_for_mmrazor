@@ -40,7 +40,7 @@ def update_losses(losses_dict, new_losses):
     return losses_dict
 
 @torch.fx.wrap
-def _get_predictions(self, data_samples, inputs):
+def _get_predictions(data_samples, inputs):
     if data_samples is not None:
         batch_img_metas = [
             data_sample.metainfo for data_sample in data_samples
@@ -242,7 +242,7 @@ class EncoderDecoder(BaseSegmentor):
         loss_decode = self._decode_head_forward_train(x, data_samples)
         # losses.update(loss_decode)
         losses = update_losses(losses, loss_decode)
-
+    
         # if self.with_auxiliary_head:
         #     loss_aux = self._auxiliary_head_forward_train(x, data_samples)
         #     losses.update(loss_aux)
@@ -412,7 +412,7 @@ class EncoderDecoder(BaseSegmentor):
         #     seg_logit = self.slide_inference(inputs, batch_img_metas)
         # else:
         #     seg_logit = self.whole_inference(inputs, batch_img_metas)
-        seg_logits = seg_logit(inputs, batch_img_metas)
+        seg_logits = seg_logit(self, inputs, batch_img_metas)
         return seg_logits
 
     def aug_test(self, inputs, batch_img_metas, rescale=True):
