@@ -234,7 +234,8 @@ class BaseSegDataset(BaseDataset):
             list[dict]: All data info of dataset.
         """
         data_list = []
-        base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
+        # base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
+        base_path = 'E:\huskvarna\project\mmseg_mmraz\mmsegmentation_for_mmrazor/'
         # img_dir = os.path.join(base_path ,self.data_prefix.get('img_path', None))
         img_dir = self.data_prefix.get('img_path', None)
         ann_dir = self.data_prefix.get('seg_map_path', None)
@@ -256,12 +257,9 @@ class BaseSegDataset(BaseDataset):
                 data_list.append(data_info)
         else:
             _suffix_len = len(self.img_suffix)
-<<<<<<< HEAD
             # base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
             base_path = r'E:\huskvarna\project\mmseg_mmraz\mmsegmentation_for_mmrazor'
             print(f"Loading from directory: {os.path.join(base_path, img_dir)}")
-=======
->>>>>>> d2c112be9a2709216daed26a4546fc31f420163b
             for img in fileio.list_dir_or_file(
                     dir_path=img_dir,
                     list_dir=False,
@@ -515,7 +513,8 @@ class BaseCDDataset(BaseDataset):
             list[dict]: All data info of dataset.
         """
         data_list = []
-        base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
+        base_path = 'E:\huskvarna\project\mmseg_mmraz\mmsegmentation_for_mmrazor/'
+        # base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
         # img_dir = os.path.join(base_path ,self.data_prefix.get('img_path', None))
         img_dir = self.data_prefix.get('img_path', None)
         # img_dir2 = os.path.join(base_path ,self.data_prefix.get('img_path', None))
