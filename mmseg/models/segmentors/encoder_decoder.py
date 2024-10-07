@@ -13,8 +13,19 @@ from mmseg.utils import (ConfigType, OptConfigType, OptMultiConfig,
                          OptSampleList, SampleList, add_prefix)
 from .base import BaseSegmentor
 
-# @torch.fx.wrap
-
+@torch.fx.wrap
+def seg_logit(inputs: Tensor, batch_img_metas: List[dict], test_cfg, slide_inference, whole_inference)-> Tensor:
+    ori_shape = batch_img_metas[0]['ori_shape']
+    if not all(_['ori_shape'] == ori_shape for _ in batch_img_metas):
+        print_log(
+            'Image shapes are different in the batch.',
+            logger='current',
+            level=logging.WARN)
+    if test_cfg == 'slide':
+        seg_logit = slide_inference(inputs, batch_img_metas)
+    else:
+        seg_logit = whole_inference(inputs, batch_img_metas)
+    return seg_logit
 
 @torch.fx.wrap
 def update_losses(losses_dict, new_losses):
@@ -44,8 +55,22 @@ def _get_predictions(data_samples, inputs):
         ] * inputs.shape[0]
     return batch_img_metas  
 
-# @torch.fx.wrap
-
+@torch.fx.wrap
+def _get_loss(x: Tensor, data_samples: SampleList, with_auxiliary_head: bool, auxiliary_head_forward_train) -> dict:
+    """Calculate losses from a batch of inputs and data samples.
+    Args:
+        x (Tensor): forward call result.
+        data_samples (list[:obj:`SegDataSample`]): The seg data samples.
+            It usually includes information such as `metainfo` and
+            `gt_sem_seg`.
+    Returns:
+        dict[str, Tensor]: a dictionary of loss components
+    """
+    """Handle auxiliary head loss calculation if available."""
+    loss_aux = {}
+    if with_auxiliary_head:
+        loss_aux = auxiliary_head_forward_train(x, data_samples)
+    return loss_aux
 
 @MODELS.register_module()
 class EncoderDecoder(BaseSegmentor):
@@ -221,10 +246,19 @@ class EncoderDecoder(BaseSegmentor):
         # if self.with_auxiliary_head:
         #     loss_aux = self._auxiliary_head_forward_train(x, data_samples)
         #     losses.update(loss_aux)
-        loss_aux = self._get_loss(x, data_samples)
+        # loss_aux = self._get_loss(x, data_samples)
+        loss_aux = _get_loss(x, data_samples, self.with_auxiliary_head, self._auxiliary_head_forward_train)
+
         losses = update_losses(losses, loss_aux)
 
         return losses
+
+    # def _get_loss(self, x: Tensor, data_samples: SampleList) -> dict:
+        
+    #     loss_aux = {}
+    #     if self.with_auxiliary_head:
+    #         loss_aux = self._auxiliary_head_forward_train(x, data_samples)
+    #     return loss_aux  
 
     def predict(self,
                 inputs: Tensor,
@@ -265,35 +299,6 @@ class EncoderDecoder(BaseSegmentor):
 
         return self.postprocess_result(self.decode_head, seg_logits, data_samples)
         # return self.postprocess_result(seg_logits, data_samples)  
-        #   
-    def seg_logit(self, batch_img_metas, inputs):
-        ori_shape = batch_img_metas[0]['ori_shape']
-        if not all(_['ori_shape'] == ori_shape for _ in batch_img_metas):
-            print_log(
-                'Image shapes are different in the batch.',
-                logger='current',
-                level=logging.WARN)
-        if self.test_cfg.mode == 'slide':
-            seg_logit = self.slide_inference(inputs, batch_img_metas)
-        else:
-            seg_logit = self.whole_inference(inputs, batch_img_metas)
-        return seg_logit
-    
-    def _get_loss(self, x: Tensor, data_samples: SampleList) -> dict:
-        """Calculate losses from a batch of inputs and data samples.
-        Args:
-            x (Tensor): forward call result.
-            data_samples (list[:obj:`SegDataSample`]): The seg data samples.
-                It usually includes information such as `metainfo` and
-                `gt_sem_seg`.
-        Returns:
-            dict[str, Tensor]: a dictionary of loss components
-        """
-        """Handle auxiliary head loss calculation if available."""
-        loss_aux = {}
-        if self.with_auxiliary_head:
-            loss_aux = self._auxiliary_head_forward_train(x, data_samples)
-        return loss_aux  
     
     def _forward(self,
                  inputs: Tensor,
@@ -415,8 +420,23 @@ class EncoderDecoder(BaseSegmentor):
         #     seg_logit = self.slide_inference(inputs, batch_img_metas)
         # else:
         #     seg_logit = self.whole_inference(inputs, batch_img_metas)
-        seg_logits = self.seg_logit(self, inputs, batch_img_metas)
+        # seg_logits = self.seg_logit(self, inputs, batch_img_metas)
+        seg_logits = seg_logit(inputs, batch_img_metas, 'slide', self.slide_inference, self.whole_inference)
+
         return seg_logits
+    
+    # def seg_logit(self, inputs, batch_img_metas):
+    #     ori_shape = batch_img_metas[0]['ori_shape']
+    #     if not all(_['ori_shape'] == ori_shape for _ in batch_img_metas):
+    #         print_log(
+    #             'Image shapes are different in the batch.',
+    #             logger='current',
+    #             level=logging.WARN)
+    #     if self.test_cfg.mode == 'slide':
+    #         seg_logit = self.slide_inference(inputs, batch_img_metas)
+    #     else:
+    #         seg_logit = self.whole_inference(inputs, batch_img_metas)
+    #     return seg_logit    
 
     def aug_test(self, inputs, batch_img_metas, rescale=True):
         """Test with augmentations.
