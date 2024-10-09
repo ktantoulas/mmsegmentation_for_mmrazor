@@ -234,8 +234,6 @@ class BaseSegDataset(BaseDataset):
             list[dict]: All data info of dataset.
         """
         data_list = []
-        base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
-        # img_dir = os.path.join(base_path ,self.data_prefix.get('img_path', None))
         img_dir = self.data_prefix.get('img_path', None)
         ann_dir = self.data_prefix.get('seg_map_path', None)
         if not osp.isdir(self.ann_file) and self.ann_file:
@@ -507,12 +505,8 @@ class BaseCDDataset(BaseDataset):
             list[dict]: All data info of dataset.
         """
         data_list = []
-        base_path = 'C:/Users/kosta/Documents/IPC/Quantization/mmsegmentation_for_mmrazor/'
-        # img_dir = os.path.join(base_path ,self.data_prefix.get('img_path', None))
         img_dir = self.data_prefix.get('img_path', None)
-        # img_dir2 = os.path.join(base_path ,self.data_prefix.get('img_path', None))
         img_dir2 = self.data_prefix.get('img_path2', None)
-        # ann_dir = os.path.join(base_path ,self.data_prefix.get('seg_map_path', None))
         ann_dir = self.data_prefix.get('seg_map_path', None)
         if osp.isfile(self.ann_file):
             lines = mmengine.list_from_file(

@@ -1,7 +1,6 @@
 # dataset settings
 dataset_type = 'CityscapesDataset'
 data_root = r'data/cityscapes/' 
-# data_root = r'C:/Users/kosta/Documents/IPC/mmsegmentation/data/cityscapes'
 crop_size = (512, 1024)
 train_pipeline = [
     dict(type='LoadImageFromFile'),
